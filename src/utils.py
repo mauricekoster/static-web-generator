@@ -247,10 +247,10 @@ def copytree(src: Path, dst: Path):
 
 
 def copy_static_assets():
-    public_path = Path.cwd() / 'public'
+    public_path = Path.cwd() / 'docs'
     static_path = Path.cwd() / 'static'
 
-    shutil.rmtree(public_path)
+    shutil.rmtree(public_path, ignore_errors=True)
     public_path.mkdir(exist_ok=True)
 
     copytree(static_path, public_path)
@@ -267,7 +267,7 @@ def extract_title(markdown):
     return title
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
     with open(from_path, "r") as f:
@@ -284,6 +284,9 @@ def generate_page(from_path, template_path, dest_path):
     html = template.replace('{{ Title }}', title)
     html = html.replace('{{ Content }}', content)
 
+    html = html.replace('href="/', f'href="{basepath}')
+    html = html.replace('src="/', f'src="{basepath}')
+
     dp = Path(dest_path)
     dp.parent.mkdir(parents=True, exist_ok=True)
     with open(dp, "w") as f:
@@ -291,7 +294,7 @@ def generate_page(from_path, template_path, dest_path):
 
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     
     p = Path(dir_path_content)
 
@@ -300,8 +303,8 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
 
         if f.is_dir():
 
-            generate_pages_recursive(f, template_path, Path(dest_dir_path) / file.name)
+            generate_pages_recursive(f, template_path, Path(dest_dir_path) / file.name, basepath)
 
         else:
             
-            generate_page(f, template_path, Path(dest_dir_path) / (file.stem + '.html'))
+            generate_page(f, template_path, Path(dest_dir_path) / (file.stem + '.html'), basepath)
